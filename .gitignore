@@ -1,0 +1,9 @@
+CMakeFiles
+cmake*
+CMake*
+CTest*
+Makefile
+!CMakeLists.txt
+
+bin/
+lib/
