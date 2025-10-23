@@ -56,6 +56,12 @@
 #include "pmalloc/internal/persistent.h"
 
 #include "pmalloc/internal/minilog.h"
+#ifdef PMALLOC_WBL
+#include "pmalloc/internal/wbl_dtt.h"
+#include "pmalloc/internal/wbl_commit.h"
+#include "pmalloc/internal/wbl_log.h"
+#include "pmalloc/internal/wbl_recovery.h"
+#endif
 
 /*
  * There are circular dependencies that cannot be broken without

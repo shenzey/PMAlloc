@@ -1,5 +1,13 @@
 
+#ifdef PMALLOC_WBL
+#include "pmalloc/internal/wbl_dtt.h"
+#endif
+
 #ifdef PMALLOC_H_TYPES
+
+#ifdef PMALLOC_WBL
+typedef struct vslab_s vslab_t;
+#endif
 
 typedef struct tcache_s tcache_t;
 
@@ -22,6 +30,10 @@ struct cache_entry_s
     void *ret;
     metamap_t *metas;
     unsigned index;
+#ifdef PMALLOC_WBL
+    vslab_t *vslab;
+    uint32_t block_index;
+#endif
 #ifdef SLAB_MORPHING
     dmeta_t *dmeta;
     bool is_sb;
@@ -53,6 +65,10 @@ struct tcache_s
     cache_t caches[MAX_SZ_IDX];
     rtree_ctx_t extents_rtree_ctx;
     large_cache_t large_caches[MAX_PSZ_IDX];
+
+#ifdef PMALLOC_WBL
+    wbl_dtt_t wbl_dtt;
+#endif
 
     numa_log_t slab_log, extent_log;
     ticker_t numa_ticker;

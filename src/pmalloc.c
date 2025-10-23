@@ -197,21 +197,26 @@ void *pmalloc_malloc_to(size_t size, void **ptr)
             {
 #endif // SLAB_MORPHING
                 cache->ncached[now]--;
+                cache_entry_t *entry = &cache->avail[now][cache->ncached[now]];
                 arena_t* arena = choose_arena(NULL);
                 add_minilog(minilog[arena->numa_ind], global_index + arena->numa_ind, ptr);
 
-                meta_set(cache->avail[now][cache->ncached[now]].metas, cache->avail[now][cache->ncached[now]].index);
+                meta_set(entry->metas, entry->index);
 #ifdef SLAB_MORPHING
-                dmeta_set_state(cache->avail[now][cache->ncached[now]].dmeta, META_ALLOCED);
+                dmeta_set_state(entry->dmeta, META_ALLOCED);
 #endif
-                persist_one(cache->avail[now][cache->ncached[now]].metas);
+                persist_one(entry->metas);
 
                 if (cache->ncached[now] == 0)
                 {
                     cache->bm = cache_bitmap_flip(cache->bm, now);
                 }
                 cache->now = now;
-                ret = cache->avail[now][cache->ncached[now]].ret;
+                ret = entry->ret;
+#ifdef PMALLOC_WBL
+                wbl_dtt_track_alloc(&tcache->wbl_dtt, entry->vslab, ret, entry->metas, entry->index, entry->block_index);
+                wbl_group_commit_maybe(tcache);
+#endif
 #ifdef SLAB_MORPHING
                 break;
             }
@@ -296,19 +301,27 @@ int pmalloc_init()
             opt_narenas = 1;
     }
 
-    if(directory_init(PMEMPATH[0]) || directory_init(PMEMPATH[1]))
+    int dir0 = directory_init(PMEMPATH[0]);
+    int dir1 = directory_init(PMEMPATH[1]);
+#ifndef PMALLOC_WBL
+    if(dir0 || dir1)
         numa_log_recovery();
 
     minilog[0] = minilog_create(0);
     minilog[1] = minilog_create(1);
     global_index[0] = global_index[1] = 0;
+#else
+    (void)dir0;
+    (void)dir1;
+    wbl_log_init();
+#endif
 
     tcache_boot(opt_narenas);
     sizeclass_boot();
 
     if (extent_boot())
     {
-        return true;
+        return -1;
     }
 
     if (rtree_new(&extents_rtree, true))
@@ -345,11 +358,12 @@ int pmalloc_init()
     sems[1] = (sem_t **)_malloc(sizeof(sem_t *) * narenas_total);
     sems[1][0] = init_sems[1][0];
 
-    return 1;
+    return 0;
 }
 
 int pmalloc_close()
 {
+#ifndef PMALLOC_WBL
     for (int k = 0; k < narenas_total; k++)
     {
         arena_t *arena = arenas[k];
@@ -359,7 +373,8 @@ int pmalloc_close()
         pthread_cancel(arena->extent_flusher);
         pthread_cancel(arena->log_GC);
     }
-    return 1;
+#endif
+    return 0;
 }
 
 uint64_t pmget_memory_usage()

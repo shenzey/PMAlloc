@@ -55,6 +55,10 @@ tcache_t *tcache_create()
     ticker_init(&tcache->numa_ticker, 1000000);
     tcache->migrate_check = 0;
 
+#ifdef PMALLOC_WBL
+    wbl_dtt_init(&tcache->wbl_dtt);
+#endif
+
     tcache_tsd_set(&tcache);
     return tcache;
 }

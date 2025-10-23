@@ -1,3 +1,4 @@
+#ifndef PMALLOC_WBL
 #include "pmalloc/internal/pmalloc_internal.h"
 
 minilog_t *minilog[2];
@@ -59,3 +60,4 @@ void add_minilog(minilog_t *log, uint64_t *global_index, uint64_t ptr)
     log->log_item[index].ptr = ptr;
     persist(&log->log_item[index], MINILOG_ITEM_SIZE);
 }
+#endif
