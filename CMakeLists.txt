@@ -24,7 +24,7 @@ aux_source_directory(${CMAKE_CURRENT_LIST_DIR}/src ${CMAKE_PROJECT_NAME}_src)
 add_library(${CMAKE_PROJECT_NAME}_static STATIC ${${CMAKE_PROJECT_NAME}_src})
 
 
-target_compile_options(${CMAKE_PROJECT_NAME}_static PRIVATE -Wall -pipe -funroll-loops -D_GNU_SOURCE -D_REENTRANT )
+target_compile_options(${CMAKE_PROJECT_NAME}_static PRIVATE -Wall -pipe -funroll-loops -D_GNU_SOURCE -D_REENTRANT -DPMALLOC_WBL )
 
 target_link_libraries(${CMAKE_PROJECT_NAME}_static pmem)
 target_link_libraries(${CMAKE_PROJECT_NAME}_static pthread)

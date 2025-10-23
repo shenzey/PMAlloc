@@ -1,3 +1,4 @@
+#ifndef PMALLOC_WBL
 #define PMALLOC_NUMA_LOG_C_
 #include "pmalloc/internal/pmalloc_internal.h"
 
@@ -218,3 +219,4 @@ void numa_log_extent_flusher(arena_t *arena)
 }
 
 void numa_log_recovery() {}
+#endif

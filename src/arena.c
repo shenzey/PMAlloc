@@ -361,39 +361,45 @@ bool arena_new(arena_t *arena, unsigned ind)
 	CPU_ZERO(&cpuset);
 	CPU_SET(cpu_id, &cpuset);
 
-	if (pthread_create(&arena->slab_flusher, NULL, numa_log_slab_flusher, (void *)arena))
-	{
-		printf("flusher creating fail! %d\n", arena->ind);
-		exit(1);
-	}
-	if (pthread_setaffinity_np(arena->slab_flusher, sizeof(cpu_set_t), &cpuset) != 0){
-    	printf("setaffinity failed for flusher: %d\n", arena->ind);
-	    exit(1);
+#ifndef PMALLOC_WBL
+        if (pthread_create(&arena->slab_flusher, NULL, numa_log_slab_flusher, (void *)arena))
+        {
+                printf("flusher creating fail! %d\n", arena->ind);
+                exit(1);
+        }
+        if (pthread_setaffinity_np(arena->slab_flusher, sizeof(cpu_set_t), &cpuset) != 0){
+        printf("setaffinity failed for flusher: %d\n", arena->ind);
+            exit(1);
     }
-	if (pthread_create(&arena->extent_flusher, NULL, numa_log_extent_flusher, (void *)arena))
-	{
-		printf("flusher creating fail! %d\n", arena->ind);
-		exit(1);
-	}
-	if (pthread_setaffinity_np(arena->extent_flusher, sizeof(cpu_set_t), &cpuset) != 0){
-    	printf("setaffinity failed for flusher: %d\n", arena->ind);
-	    exit(1);
+        if (pthread_create(&arena->extent_flusher, NULL, numa_log_extent_flusher, (void *)arena))
+        {
+                printf("flusher creating fail! %d\n", arena->ind);
+                exit(1);
+        }
+        if (pthread_setaffinity_np(arena->extent_flusher, sizeof(cpu_set_t), &cpuset) != 0){
+        printf("setaffinity failed for flusher: %d\n", arena->ind);
+            exit(1);
     }
     if (pthread_create(&arena->log_GC, NULL, slow_GC, (void *)arena))
-	{
-		printf("GC creating fail! %d\n", arena->ind);
-		exit(1);
-	}
-	if (pthread_setaffinity_np(arena->log_GC, sizeof(cpu_set_t), &cpuset) != 0){
-    	printf("setaffinity failed for flusher: %d\n", arena->ind);
-	    exit(1);
+        {
+                printf("GC creating fail! %d\n", arena->ind);
+                exit(1);
+        }
+        if (pthread_setaffinity_np(arena->log_GC, sizeof(cpu_set_t), &cpuset) != 0){
+        printf("setaffinity failed for flusher: %d\n", arena->ind);
+            exit(1);
     }
+#endif
 
 	arena->shadow_tomb = (shadow_chunk_t*)_malloc(sizeof(shadow_chunk_t));
 	arena->shadow_tomb->cnt = 0;
 	arena->shadow_tomb->next = NULL;
 
-	arena->log = log_create(arena);
+#ifndef PMALLOC_WBL
+        arena->log = log_create(arena);
+#else
+        arena->log = NULL;
+#endif
 
 	rb_new(file_t, file_link, &arena->file_tree);
 

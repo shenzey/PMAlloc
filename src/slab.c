@@ -455,6 +455,10 @@ int slab_pop_one_cache(arena_t *arena, cache_t *cache, vslab_t *vslab, bin_t *bi
     entry->index = mid % 8;
     entry->metas = (bitmap_t *)((intptr_t)slab + sc.moffset + mid / 8);
     entry->ret = (void *)((intptr_t)slab + sc.roffset + index * sc.bitsize);
+#ifdef PMALLOC_WBL
+    entry->vslab = vslab;
+    entry->block_index = (uint32_t)index;
+#endif
 
 #ifdef SLAB_MORPHING
     entry->dmeta = &vslab->dmeta[index];
@@ -651,6 +655,10 @@ void slab_free_small(arena_t *free_arena, tcache_t *free_tcache, vslab_t *vslab,
             entry->index = mindex;
             entry->metas = meta;
             entry->ret = ptr;
+#ifdef PMALLOC_WBL
+            entry->vslab = vslab;
+            entry->block_index = (uint32_t)index;
+#endif
 #ifdef SLAB_MORPHING
             entry->dmeta = dmeta;
             entry->is_sb = false;
@@ -697,6 +705,10 @@ void slab_free_small(arena_t *free_arena, tcache_t *free_tcache, vslab_t *vslab,
             }
         }
     }
+#ifdef PMALLOC_WBL
+    wbl_dtt_track_free_intent(&free_tcache->wbl_dtt, vslab, ptr, meta, mindex, (uint32_t)index);
+    wbl_group_commit_maybe(free_tcache);
+#endif
     return;
 }
 

@@ -1,3 +1,4 @@
+#ifndef PMALLOC_WBL
 #include "pmalloc/internal/pmalloc_internal.h"
 
 static inline int vlchunk_cmp(void *a, void *b)
@@ -543,3 +544,4 @@ void flush_tomb(arena_t *arena, vlog_t **vlog_ptr, log_item_t tomb)
         }
     }
 }
+#endif
